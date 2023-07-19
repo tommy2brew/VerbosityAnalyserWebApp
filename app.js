@@ -22,9 +22,9 @@ app.get('/privacy', (req, res) => {
     res.sendFile('privacy.html', { root: './views' })
 });
 
-//API routes
-const clientID = "ac87cd645d534f7e83940acbba480fb3";
-const secret = "794fd75ed48f439f90a3da71038094b3";
+/////////////////////API routes////////////////////////
+
+//constants used in multiple routes//
 const redirectURI = 'http://localhost:3001/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
