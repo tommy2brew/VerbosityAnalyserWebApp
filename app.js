@@ -25,6 +25,9 @@ app.get('/privacy', (req, res) => {
 /////////////////////API routes////////////////////////
 
 //constants used in multiple routes//
+const secret = process.env.SECRET;
+console.log(secret);
+const clientID = "8a80fb4569e4406da3ad13870a043324";
 const redirectURI = 'http://localhost:3001/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
