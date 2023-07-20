@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Wordify</title>
+    <meta charset="UTF-8">
+    <meta name="keywords" content="Spotify, API, music">
+    <meta namme="description" content="Test your musical wordiness">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <header>
+        <a href="#" id="burger">
+            <i class="fa fa-bars"></i>
+        </a>
+
+        <div id="links">
+            <a href="wordify.html">Home</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="about.html">About</a>
+        </div>
+    </header>
+
+    <div class="blurb">
+        <h1 class="title">Wordify</h1>
+    </div>
+
+    <div id="score-container">
+        <div id="loading-container">
+            <h1 id="calculating">Calculating your wordiness score...</h1>
+            <div id="outer-circle">
+                <div id="inner-circle">
+                    <p>0</p>
+                </div>
+            </div>
+        </div>
+        <div class="results-container">
+            <h1>Your score is <span id="score" class="result"></span> That's in the top <span id="percentile"
+                    class="result"></span> of listeners!</h1>
+            <div class= "personal-container">
+                <h2>Your wordiest songs are...</h2>
+                <div class="top-5" id = "tracks">
+                    <ul>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 1</li>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 2</li>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 3</li>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 4</li>
+                        <li class="twocolumns"><img src = "example_cover.jpg" alt = "album cover art">Track 5</li>
+                    </ul>
+                </div>
+                <h2>Your most verbose artists are...</h2>
+                <div class = "top-5" id = "artists">
+                    <ul>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 1</li>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 2</li>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 3</li>
+                        <li><img src = "example_cover.jpg" alt = "album cover art">Track 4</li>
+                        <li class = "twocolumns"><img src = "example_cover.jpg" alt = "album cover art">Track 5</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Made By Tom P</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>

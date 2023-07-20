@@ -83,6 +83,18 @@ async function fillCircle(score) {
     }
     text.textContent = score;
     clearInterval(wordInterval);
+
+    document.querySelector('#score').textContent = score;
+    document.querySelector('#percentile').textContent = "90%";
+
+    document.querySelector('.results-container').classList.add('slide-in');
+    await delay(1500);
+    document.querySelector('.personal-container').classList.add('slide-in');
 }
 
-fillCircle(800);
+function personalisePage() {
+    
+    
+}
+
+fillCircle(500);
