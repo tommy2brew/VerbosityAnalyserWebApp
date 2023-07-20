@@ -1,3 +1,8 @@
+:root{
+    --endX: 0;
+    --endY: 0;
+}
+
 *{
     margin-left: 0;
     margin-right: 0;
@@ -53,6 +58,38 @@ header{
     background-color: #1DB954;
     border: 10px solid #1DB954;
     border-radius: 25px;
+}
+
+#outer-circle{
+    margin: auto;
+    width: 25rem;
+    height: 25rem;
+    border: solid gray;
+    border-radius: 50%;
+    align-items: center;
+    /*background: linear-gradient(to top, #1DB954 50%, blue 90%, white 20%);*/
+}
+
+#inner-circle{
+    margin: auto;
+    margin-top: 7rem;
+    width: 10rem;
+    height: 10rem;
+    border: inherit;
+    border-radius: 50%;
+    background-color: white;
+}
+
+#inner-circle>p{
+    margin-top: 1.75rem;
+    font-size: 5.25rem;
+}
+
+.falling-word{
+    position:absolute;
+    top: 0;
+    font-size: 2rem;
+    transition: transform 3s, opacity 4s;
 }
 
 footer{

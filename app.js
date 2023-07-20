@@ -41,7 +41,7 @@ app.get('/login', function (req, res) {
             response_type: "code",
             redirect_uri: redirectURI,
             scope: "user-top-read",
-            show_dialog: "true"
+            show_dialog: "false"
         }));
 });
 
