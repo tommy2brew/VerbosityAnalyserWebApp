@@ -66,6 +66,8 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 async function fillCircle(score) {
+    fetch('/points');
+
     let circle = document.querySelector('#outer-circle');
     let text = circle.querySelector('p');
     let fillScore = score/10;
@@ -75,10 +77,10 @@ async function fillCircle(score) {
     await delay(2000);
     while(filled < fillScore){
         circle.style.background = `linear-gradient(to top, #1DB954 ${filled}%, white 0%)`;
-        scoreJump = Math.random() * (score/750- score/3000) + score/3000;
+        let scoreJump = Math.random() * (score/750- score/3000) + score/3000;
         filled += scoreJump;
         text.textContent = Math.trunc(filled*10);
-        interval = Math.random() * (150 - 40) + 40;
+        let interval = Math.random() * (150 - 40) + 40;
         await delay(interval);
     }
     text.textContent = score;
@@ -90,11 +92,6 @@ async function fillCircle(score) {
     document.querySelector('.results-container').classList.add('slide-in');
     await delay(1500);
     document.querySelector('.personal-container').classList.add('slide-in');
-}
-
-function personalisePage() {
-    
-    
-}
+};
 
 fillCircle(500);
