@@ -62,7 +62,6 @@ header{
     border: solid gray;
     border-radius: 50%;
     align-items: center;
-    /*background: linear-gradient(to top, #1DB954 50%, blue 90%, white 20%);*/
 }
 
 #inner-circle{
@@ -106,14 +105,18 @@ header{
     transition: all 500ms ease 2s;
 }
 
+.personal-container>h2{
+    font-size: 2.2rem;
+    color:#0e4621;
+    border-top: solid thin grey;
+    border-bottom: solid thin grey;
+}
+
 .slide-in{
     opacity: 1;
 }
 
-.personal-container>h2{
-    font-size: 2.2rem;
-    color:#0e4621;
-}
+
 
 .top-5{
     display: grid;
