@@ -61,6 +61,8 @@ app.get('/login', function (req, res) {
 });
 
 //gettting api tokens after user authenticates and sending user to score page//
+let errorList = [];
+
 app.get('/callback', function (req, res) {
     console.log("callbacked");
     if (req.query.error) {
@@ -108,7 +110,7 @@ app.get('/callback', function (req, res) {
         });
     });
     post.on('error', (error) => {
-        console.error(error);
+        errorList.push(error);
     });
     post.write(postBody);
     post.end();
@@ -149,7 +151,7 @@ app.get('/refresh_token', function(req, res){
     })
 
     post.on('error', (error) => {
-        console.error(error);
+        errorList.push(error);
     });
     post.write(postBody);
     post.end();
@@ -157,7 +159,6 @@ app.get('/refresh_token', function(req, res){
 
 
 /////////////////////API CALLS USING ACCESS TOKEN/////////////////////////////
-
 function getData(endPoint, queryParams) {
     return new Promise((resolve, reject) => {
         let options = {
@@ -185,7 +186,7 @@ function getData(endPoint, queryParams) {
             });
         });
         request.on('error', (error) => {
-            console.log(error);
+            errorList.push(error);
         });
         request.end();
     });
@@ -200,18 +201,28 @@ async function setTopTracks(){
         limit: 30,
         offset: 0
     });
-    let tracks = await getData(endPointTopTracks, queryParamsTopTracks);
-    userTracks = tracks.items;
+    try{
+        let tracksJSON = await getData(endPointTopTracks, queryParamsTopTracks);
+        userTracks = tracksJSON.items;
+    }
+    catch(error) {
+        errorList.push(error);
+    }
 }
 
 async function setTopArtists(){
     let endPointTopArtists = 'https://api.spotify.com/v1/me/top/artists';
     let queryParamsTopArtists = new URLSearchParams({
-        limit: 30,
+        limit: 20,
         offset: 0
     });
-    let artists = await getData(endPointTopArtists, queryParamsTopArtists);
-    userArtists = artists.items;
+    try {
+        let artistsJSON = await getData(endPointTopArtists, queryParamsTopArtists);
+        userArtists = artistsJSON.items;
+    }
+    catch {
+        errorList.push(error);
+    }
 }
 
 async function getArtistTopTracks(id){
@@ -219,21 +230,26 @@ async function getArtistTopTracks(id){
     let queryParamsArtistTop = new URLSearchParams ({
         market: 'GB'
     });
-    let topTracks = await getData(endPointArtistTop, queryParamsArtistTop);
-    return topTracks.tracks;
+    try {
+        let topTracksJSON = await getData(endPointArtistTop, queryParamsArtistTop);
+        return topTracksJSON.tracks;
+    }
+    catch(error) {
+        errorList.push(error);
+    }
 }
 
 ////////////////////////SONG LYRIC API CALL///////////////////////////////
 const musixmatchKey = process.env.LYRICS_KEY;
-function getLyricsID(queryParams) {
+function getLyricsIDJSON(queryParams) {
     return new Promise((resolve, reject) => {
         let options = {
             method: 'GET',
         };
         let endPoint = "https://api.musixmatch.com/ws/1.1/track.search";
         let request = https.request(`${endPoint}?apikey=${musixmatchKey}&
-            q_tracks=${queryParams[0]}&q_artist=${queryParams[1]}
-                &f_has_lyrics=1&s_track_rating=desc`
+            q_track=${queryParams[0]}&q_artist=${queryParams[1]}
+                &f_has_lyrics=1&$track_filter=desc`
             , options, (outcome) => {
             let data = '';
         
@@ -242,26 +258,28 @@ function getLyricsID(queryParams) {
             });
         
             outcome.on('end', () => {
-                if(outcome.statusCode === 200) {
-                    data = JSON.parse(data);
+                data = JSON.parse(data);
+                let statusCode = outcome.statusCode; //data.message.header.status_code; 
+                if(statusCode === 200) {
                     resolve(data);
                 }
-                else if (outcome.statusCode === 401){
-                    console.log("401111111111");
+                else if (statusCode === 401){
+                    reject(new Error("Maxed API requests, try again tommorow"));
                 }
                 else{
-                    reject(new error(`${outcome.statusCode} + in get lyricsId`));
+                    reject(new Error(`${outcome.statusCode} + in lyrics ID`));
                 };
             });
         });
         request.on('error', (error) => {
-            console.log(error);
+            errorList.push(error);
         });
         request.end();
     });
+
 }
 
-function getLyrics(id) {
+function getLyricsJSON(id) {
     return new Promise((resolve, reject) => {
         let options = {
             method: 'GET',
@@ -276,30 +294,53 @@ function getLyrics(id) {
             });
         
             outcome.on('end', () => {
-                if(outcome.statusCode === 200) {
-                    data = JSON.parse(data);
+                data = JSON.parse(data);
+                //let statusCode = data.message.header.status_code; 
+                let statusCode = outcome.statusCode;
+                if(statusCode === 200) {
                     resolve(data);
                 }
-                else if (outcome.statusCode === 401){
-                    throw "Maxed API requests, try again tommorow";
+                else if (statusCode === 401){
+                    reject(new Error("Maxed API requests, try again tommorow"));
                 }
                 else{
-                    reject(new error(`${outcome.statusCode} + in lyrics`));
+                    reject(new Error(`${outcome.statusCode} + in lyrics`));
                 };
             });
         });
         request.on('error', (error) => {
-            console.log(error);
+            errorList.push(error);
         });
         request.end();
     });
+}
+
+async function getLyricsID(urlSearch) {
+    try{
+        let lyricsIDJson = await getLyricsIDJSON(urlSearch);
+        return lyricsIDJson.message.body.track_list[0].track.track_id;
+    }
+    catch (error) {
+        errorList.push(error);
+    }
+}
+
+async function getLyrics(id) {
+    try {
+        let lyricsJSON = await getLyricsJSON(id);
+        return lyricsJSON.message.body.lyrics.lyrics_body;
+    }
+    catch (error) {
+        console.log(error);
+        errorList.push(error);
+    }
 }
 //////////////////////WORDINESS SCORE LOGIC////////////////////////////
 
 let top5Tracks = [];
 let top5Artists = [];
 
-//blueprint for both top songs and artists//
+//blueprint for both top songs and artists, to be used in html elements//
 class wordinessItem {
     constructor(name, picture, wordiness) {
         this.name = name;
@@ -308,26 +349,29 @@ class wordinessItem {
     }
 }
 
-//converting a trackname and artist name into a useful form for webscraping//
+//converting a trackname and artist name into a useful form for musixMatch api//
 function musixmatchURLify(track, artist) {;
     let trackNameURLFormatted = track;
-    if(track.includes('Remastered')){
-        //check if its in format (Remastered) or - Remastered
+
+    if(trackNameURLFormatted.includes('Remastered')){
+        //check if its in format "(Remastered)"" or "- Remastered"
         let remasterOffset = track.includes('(Remaster')? 2 : 3
         trackNameURLFormatted = trackNameURLFormatted.substring
             (0, trackNameURLFormatted.indexOf('Remaster')-remasterOffset);
     };
-    trackNameURLFormatted  = track.replace(/[^a-zA-Z0-9\s]/g, "").toLowerCase();
+
+    trackNameURLFormatted  = trackNameURLFormatted.replace(/[^a-zA-Z0-9\s]/g, "").toLowerCase();
     let artistNameURLFormatted = artist.replace(/[^a-zA-Z0-9\s]/g, "").toLowerCase();
     return [encodeURI(trackNameURLFormatted), encodeURI(artistNameURLFormatted)];
 }
 
-async function getArtistTopTrackNames(id) {
-    let topTracksArray = await getArtistTopTracks(id);
+async function getArtistTopTrackNamesAndID(id) {
     let topTrackNamesAndDuration = [];
-    for (const track of topTracksArray) {
-        topTrackNamesAndDuration.push({name: track.name, duration: track.duration});
-    }
+
+    let topTracksArray = await getArtistTopTracks(id);
+    topTracksArray.forEach(track => {
+        topTrackNamesAndDuration.push({name: track.name, duration: track.duration_ms})
+    })
     return topTrackNamesAndDuration;
 }
 
@@ -335,35 +379,40 @@ function distinct(value, index, array) {
     return array.indexOf(value) === index;
 }
 async function getTrackWordiness(urlSearch, duration) {
-    let lyricsIDJSON = await getLyricsID(urlSearch);
-    if (lyricsIDJSON.message.header.status_code === 401) {throw "Maxed API Calls, try again tommorow"};
-    response = lyricsIDJSON.message.body;
-    track = response.track_list[0].track;
-    id = track.track_id;
-
-    lyricsJSON = await getLyrics(id);
-    lyrics = lyricsJSON.message.body.lyrics.lyrics_body.replace(/[^a-zA-Z0-9\s]/g, "")
-        .replace(/\n/g, " ");
+    let id = await getLyricsID(urlSearch);
+    if(!id){
+        console.log(urlSearch);
+        return 0;
+    }
+    let lyrics = await getLyrics(id);
+    if(!lyrics || lyrics.length === 0){
+        console.log(urlSearch);
+        return 0;
+    }
+    
+    lyrics = lyrics.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\n/g, " ");
     lyrics = lyrics.split(' ');
-
     uniqueWords = lyrics.filter(distinct).length;
+
     durationMins = duration/60000;    
     wordiness = uniqueWords / (durationMins*0.3);
-    console.log(wordiness);
     return wordiness;
 }
 
 async function calculateArtistWordiness(id, name) {
-    let allTracks = await getArtistTopTrackNames(id);
     let totalTracksWordiness = 0;
-    allTracks.forEach(track => {
-        totalTracksWordiness += getTrackWordiness(musixmatchURLify(track.name, name),
-            track.duration_ms)});
-    return totalTracksWordiness/allTracks.length;
+
+    let allArtistTracks = await getArtistTopTrackNamesAndID(id);
+    for(const track of allArtistTracks){
+        totalTracksWordiness += await getTrackWordiness(musixmatchURLify(track.name, name),
+            track.duration);
+    }
+    return totalTracksWordiness/allArtistTracks.length;
 }
 
 async function setWordiestTracks() {
     let allTracks = [];
+
     for (const track of userTracks) {
         let name = track.name;
         let artist = track.artists[0].name;
@@ -373,31 +422,38 @@ async function setWordiestTracks() {
         trimmedTrack = new wordinessItem(name, albumCover, wordiness);
         allTracks.push(trimmedTrack);
     }
+
     allTracks.sort((a,b) => b.wordiness - a.wordiness);
     let wordiestTracks = allTracks.slice(0,5);
     top5Tracks = wordiestTracks;
 }
 
 async function setWordiestArtists() {
-    let allArtists = [];
-    for (const artist of userArtists) {
-        let name = artist.name;
-        let picture = artist.images[2].url;
-        let wordiness = await calculateArtistWordiness(artist.id, name)
-        trimmedArtist = new wordinessItem(name, picture, wordiness);
-        allArtists.push(trimmedArtist);
-    }
-    allArtists.sort((a,b) => b.wordiness - a.wordiness);
-    let wordiestArtists = allArtists.slice(0,5);
-    top5Artists = wordiestArtists;
+    
+        let allArtists = [];
+
+        for (const artist of userArtists) {
+            let name = artist.name;
+            let picture = artist.images[2].url;
+            let wordiness = await calculateArtistWordiness(artist.id, name)
+            trimmedArtist = new wordinessItem(name, picture, wordiness);
+            allArtists.push(trimmedArtist); 
+        }
+
+        allArtists.sort((a,b) => b.wordiness - a.wordiness);
+        let wordiestArtists = allArtists.slice(0,5);
+        top5Artists = wordiestArtists;
+    
+    
 }
 
 async function calculateUserWordiness() {
     let totalWordiness = 0;
+    
     for (const track of userTracks) {
         let artist = track.album.artists[0].name;
         let name = track.name;
-        let duration = track.duration_ms;
+        let duration = track.duration_ms; 
 
         musixmatchURL = musixmatchURLify(name, artist);
         let wordiness = await getTrackWordiness(musixmatchURL, duration);
@@ -409,24 +465,28 @@ async function calculateUserWordiness() {
 
 app.get('/points', async function (req, res) {
     //await setTopTracks();
-    try{
-        await setTopArtists();
-        await setWordiestArtists();
-        console.log(top5Artists);
-        //console.log("------------------------artists---------------------------------");
-        console.log(top5Tracks);
-    }
-    catch(err){
-        console.log(err);
-    }
+    await setTopArtists();
+    await setTopTracks();
+    await setWordiestArtists();
+    console.log(top5Artists);
+    console.log("------------------------artists---------------------------------");
+    await setWordiestTracks();
+    console.log(top5Tracks);
+    console.log("------------------------top tracks---------------------------------");
+    wordiness = await calculateUserWordiness();
+    console.log(wordiness);
+    console.log(errorList);
     //await setWordiestTracks();
     //let wordiness = await calculateUserWordiness();
-    //console.log("------------------------top tracks---------------------------------");
     
     //console.log("------------------------tracks---------------------------------");
     //console.log(wordiness + "wordiness score!");
+    
 });
 
+//process.on('unhandledRejection', (reason, promise) => {
+ //   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+ // });  
 
 //starting the server
 app.listen(port, () => {
