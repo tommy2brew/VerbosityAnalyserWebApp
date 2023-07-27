@@ -60,14 +60,12 @@ function spawnWord() {
     document.body.appendChild(wordElement);
 }
 
-let wordInterval = setInterval(spawnWord, 500);
-
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 async function fillCircle(score) {
-    fetch('/points');
-
+    let wordInterval = setInterval(spawnWord, 500);
+    
     let circle = document.querySelector('#outer-circle');
     let text = circle.querySelector('p');
     let fillScore = score/10;
@@ -88,10 +86,65 @@ async function fillCircle(score) {
 
     document.querySelector('#score').textContent = score;
     document.querySelector('#percentile').textContent = "90%";
-
-    document.querySelector('.results-container').classList.add('slide-in');
-    await delay(1500);
-    document.querySelector('.personal-container').classList.add('slide-in');
 };
 
-fillCircle(500);
+function setWordiest(wordinessItems) {
+
+    function updateListElements(listElements, itemList) {
+        listElements.forEach((li, index) => {
+            let picture = itemList[index].picture;
+            let name = itemList[index].name;
+            let wordiness = itemList[index].wordiness;
+            
+            
+            let img = document.createElement("img");
+            img.src = picture;
+            li.appendChild(img);
+            let span = document.createElement("span");
+            span.textContent = `${index+1}. ${name}- ${wordiness} unique words per minute`;
+            li.appendChild(span)
+            
+        })
+    }
+
+    let topTracksElements = document.querySelectorAll('#tracks li');
+    let tracks = wordinessItems.tracks;
+    updateListElements(topTracksElements, tracks);
+
+    let topArtistsElements = document.querySelectorAll('#artists li');
+    let artists = wordinessItems.artists;
+    updateListElements(topArtistsElements, artists);
+}
+
+async function getWordinessItems() {
+    try{
+        const response = await fetch('/points');
+        const data = await response.json();
+        return data;
+    }
+    catch(error) {
+        console.error("Error when fetching wordiness data: " + error);
+    }
+}
+
+async function personalisePage() {
+    try {
+        let wordinessItems = await getWordinessItems();
+        setWordiest(wordinessItems);
+        await fillCircle(wordinessItems.wordiness);
+
+        document.querySelector('.results-container').classList.add('slide-in');
+        await delay(1500)
+        document.querySelector('.personal-container').classList.add('slide-in');
+    }
+    catch (error) {
+        console.error("Error when getting wordiness items: " + error);
+        wordinessFailed();
+    }
+}
+
+function wordinessFailed() {
+
+}
+
+personalisePage();

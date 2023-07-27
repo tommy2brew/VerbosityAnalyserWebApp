@@ -1,9 +1,9 @@
 const express = require("express");
 const session = require('express-session')
 const querystring = require("querystring");
+const http = require('http');
 const https = require('https');
 const path = require('path');
-const { error } = require("console");
 require('dotenv').config();
 const app = express();
 const port = 3001;
@@ -61,8 +61,6 @@ app.get('/login', function (req, res) {
 });
 
 //gettting api tokens after user authenticates and sending user to score page//
-let errorList = [];
-
 app.get('/callback', function (req, res) {
     console.log("callbacked");
     if (req.query.error) {
@@ -110,7 +108,7 @@ app.get('/callback', function (req, res) {
         });
     });
     post.on('error', (error) => {
-        errorList.push(error);
+        console.error("Error in spotify callback");
     });
     post.write(postBody);
     post.end();
@@ -151,7 +149,7 @@ app.get('/refresh_token', function(req, res){
     })
 
     post.on('error', (error) => {
-        errorList.push(error);
+        console.error("Error in refreshing spotify token")
     });
     post.write(postBody);
     post.end();
@@ -181,12 +179,12 @@ function getData(endPoint, queryParams) {
                     resolve(data);
                 }
                 else{
-                    reject(console.log(outcome.statusCode + "in get sportify data"));
+                    reject(console.log(outcome.statusCode + "in get spotify data"));
                 };
             });
         });
         request.on('error', (error) => {
-            errorList.push(error);
+            console.error("Error in getting spotify data")
         });
         request.end();
     });
@@ -206,7 +204,7 @@ async function setTopTracks(){
         userTracks = tracksJSON.items;
     }
     catch(error) {
-        errorList.push(error);
+        console.error("Error when setting the top user tracks")
     }
 }
 
@@ -221,7 +219,7 @@ async function setTopArtists(){
         userArtists = artistsJSON.items;
     }
     catch {
-        errorList.push(error);
+        console.error("Error when setting the top user artists")
     }
 }
 
@@ -235,21 +233,18 @@ async function getArtistTopTracks(id){
         return topTracksJSON.tracks;
     }
     catch(error) {
-        errorList.push(error);
+        console.error("Error when setting the artist top tracks")
     }
 }
 
 ////////////////////////SONG LYRIC API CALL///////////////////////////////
 const musixmatchKey = process.env.LYRICS_KEY;
-function getLyricsIDJSON(queryParams) {
+function getLyricsData(endpoint, queryParams) {
     return new Promise((resolve, reject) => {
         let options = {
-            method: 'GET',
+            method: 'GET'
         };
-        let endPoint = "https://api.musixmatch.com/ws/1.1/track.search";
-        let request = https.request(`${endPoint}?apikey=${musixmatchKey}&
-            q_track=${queryParams[0]}&q_artist=${queryParams[1]}
-                &f_has_lyrics=1&$track_filter=desc`
+        let request = http.request(`${endpoint}?${queryParams}&apikey=${musixmatchKey}`
             , options, (outcome) => {
             let data = '';
         
@@ -259,57 +254,20 @@ function getLyricsIDJSON(queryParams) {
         
             outcome.on('end', () => {
                 data = JSON.parse(data);
-                let statusCode = outcome.statusCode; //data.message.header.status_code; 
+                let statusCode = data.message.header.status_code; //data.message.header.status_code;
                 if(statusCode === 200) {
                     resolve(data);
                 }
                 else if (statusCode === 401){
-                    reject(new Error("Maxed API requests, try again tommorow"));
+                    reject(new Error("401 error when fetching data for: "));
                 }
                 else{
-                    reject(new Error(`${outcome.statusCode} + in lyrics ID`));
+                    reject(new Error(`${outcome.statusCode} + error when fetching data for: `));
                 };
             });
         });
         request.on('error', (error) => {
-            errorList.push(error);
-        });
-        request.end();
-    });
-
-}
-
-function getLyricsJSON(id) {
-    return new Promise((resolve, reject) => {
-        let options = {
-            method: 'GET',
-        };
-        let endPoint = "https://api.musixmatch.com/ws/1.1/track.lyrics.get";
-        let request = https.request(`${endPoint}?apikey=${musixmatchKey}&track_id=${id}`
-            , options, (outcome) => {
-            let data = '';
-        
-            outcome.on('data', (chunk) => {
-                data+=chunk;
-            });
-        
-            outcome.on('end', () => {
-                data = JSON.parse(data);
-                //let statusCode = data.message.header.status_code; 
-                let statusCode = outcome.statusCode;
-                if(statusCode === 200) {
-                    resolve(data);
-                }
-                else if (statusCode === 401){
-                    reject(new Error("Maxed API requests, try again tommorow"));
-                }
-                else{
-                    reject(new Error(`${outcome.statusCode} + in lyrics`));
-                };
-            });
-        });
-        request.on('error', (error) => {
-            errorList.push(error);
+            console.error("Error when getting the lyrics data")
         });
         request.end();
     });
@@ -317,22 +275,25 @@ function getLyricsJSON(id) {
 
 async function getLyricsID(urlSearch) {
     try{
-        let lyricsIDJson = await getLyricsIDJSON(urlSearch);
+        let endPointLyricsID = "http://api.musixmatch.com/ws/1.1/track.search";
+        let queryLyricsID = `&q_artist=${urlSearch[0]}&q_track=${urlSearch[1]}&f_has_lyrics=1&track_filter=desc`
+        let lyricsIDJson = await getLyricsData(endPointLyricsID, queryLyricsID);
         return lyricsIDJson.message.body.track_list[0].track.track_id;
     }
     catch (error) {
-        errorList.push(error);
+        console.error(`problem finding lyric id for ${urlSearch[1]}. Error is: ${error}`);
     }
 }
 
 async function getLyrics(id) {
     try {
-        let lyricsJSON = await getLyricsJSON(id);
+        let endPointLyrics = "http://api.musixmatch.com/ws/1.1/track.lyrics.get";
+        let queryLyrics = `track_id=${id}`
+        let lyricsJSON = await getLyricsData(endPointLyrics, queryLyrics);
         return lyricsJSON.message.body.lyrics.lyrics_body;
     }
     catch (error) {
-        console.log(error);
-        errorList.push(error);
+        console.error(`problem finding lyric body for ${id}. Error is: ${error}`);
     }
 }
 //////////////////////WORDINESS SCORE LOGIC////////////////////////////
@@ -362,7 +323,7 @@ function musixmatchURLify(track, artist) {;
 
     trackNameURLFormatted  = trackNameURLFormatted.replace(/[^a-zA-Z0-9\s]/g, "").toLowerCase();
     let artistNameURLFormatted = artist.replace(/[^a-zA-Z0-9\s]/g, "").toLowerCase();
-    return [encodeURI(trackNameURLFormatted), encodeURI(artistNameURLFormatted)];
+    return [encodeURI(artistNameURLFormatted), encodeURI(trackNameURLFormatted)];
 }
 
 async function getArtistTopTrackNamesAndID(id) {
@@ -381,33 +342,46 @@ function distinct(value, index, array) {
 async function getTrackWordiness(urlSearch, duration) {
     let id = await getLyricsID(urlSearch);
     if(!id){
-        console.log(urlSearch);
-        return 0;
+        return -1;
     }
     let lyrics = await getLyrics(id);
     if(!lyrics || lyrics.length === 0){
-        console.log(urlSearch);
-        return 0;
+        return -1;
     }
     
     lyrics = lyrics.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\n/g, " ");
-    lyrics = lyrics.split(' ');
+    lyrics = lyrics.split(' ').slice(0,lyrics.length-7);
     uniqueWords = lyrics.filter(distinct).length;
 
     durationMins = duration/60000;    
     wordiness = uniqueWords / (durationMins*0.3);
-    return wordiness;
+    return Math.round(wordiness);
 }
 
 async function calculateArtistWordiness(id, name) {
     let totalTracksWordiness = 0;
+    let trackOmissions = 0;
 
     let allArtistTracks = await getArtistTopTrackNamesAndID(id);
     for(const track of allArtistTracks){
-        totalTracksWordiness += await getTrackWordiness(musixmatchURLify(track.name, name),
+        trackWordiness = await getTrackWordiness(musixmatchURLify(track.name, name),
             track.duration);
+        if(trackWordiness === -1){
+            trackOmissions ++;
+        }
+        else{
+            totalTracksWordiness += trackWordiness;
+        }
     }
-    return totalTracksWordiness/allArtistTracks.length;
+    let usableTracks = allArtistTracks.length-trackOmissions;
+
+    try{
+        return totalTracksWordiness/usableTracks;
+    }
+    catch (error){
+        console.log(`Couldn't get wordiness for ${name}. They might have no lyrics on file`);
+    }
+    
 }
 
 async function setWordiestTracks() {
@@ -416,7 +390,7 @@ async function setWordiestTracks() {
     for (const track of userTracks) {
         let name = track.name;
         let artist = track.artists[0].name;
-        let albumCover = track.album.images[2].url;
+        let albumCover = track.album.images[1].url;
         let duration = track.duration_ms;
         let wordiness = await getTrackWordiness(musixmatchURLify(name, artist), duration);
         trimmedTrack = new wordinessItem(name, albumCover, wordiness);
@@ -434,7 +408,7 @@ async function setWordiestArtists() {
 
         for (const artist of userArtists) {
             let name = artist.name;
-            let picture = artist.images[2].url;
+            let picture = artist.images[1].url;
             let wordiness = await calculateArtistWordiness(artist.id, name)
             trimmedArtist = new wordinessItem(name, picture, wordiness);
             allArtists.push(trimmedArtist); 
@@ -448,8 +422,9 @@ async function setWordiestArtists() {
 }
 
 async function calculateUserWordiness() {
-    let totalWordiness = 0;
-    
+    let allWordinesses = [];
+    let trackOmissions = 0;
+
     for (const track of userTracks) {
         let artist = track.album.artists[0].name;
         let name = track.name;
@@ -457,38 +432,75 @@ async function calculateUserWordiness() {
 
         musixmatchURL = musixmatchURLify(name, artist);
         let wordiness = await getTrackWordiness(musixmatchURL, duration);
-        totalWordiness += wordiness;
+        if(wordiness === -1){
+            trackOmissions ++;
+        }
+        else{
+            allWordinesses.push(wordiness);
+        }
     }
-    return totalWordiness/3;
+    
+    allWordinesses.sort((a,b) => b - a);
+    sliceRange = trackOmissions < 15 ? 15 : trackOmissions;
+    let top15wordiest = allWordinesses.slice(0, sliceRange);
+    let total15wordiest = top15wordiest.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+    const score = (total15wordiest*10) / sliceRange;
+    return Math.round(score * 0.80);
 }
 
-
 app.get('/points', async function (req, res) {
-    //await setTopTracks();
+    if(session.results){
+        res.send(session.results);
+        return;
+    }
     await setTopArtists();
-    await setTopTracks();
     await setWordiestArtists();
     console.log(top5Artists);
     console.log("------------------------artists---------------------------------");
+    await setTopTracks();
     await setWordiestTracks();
     console.log(top5Tracks);
     console.log("------------------------top tracks---------------------------------");
-    wordiness = await calculateUserWordiness();
-    console.log(wordiness);
-    console.log(errorList);
-    //await setWordiestTracks();
-    //let wordiness = await calculateUserWordiness();
+
+    let userWordiness = await calculateUserWordiness();
+    console.log(userWordiness);
+    console.log("------------------------wordiness---------------------------------");
+
+    let results = {
+        tracks: top5Tracks,
+        artists: top5Artists,
+        wordiness: userWordiness
+    };
     
-    //console.log("------------------------tracks---------------------------------");
-    //console.log(wordiness + "wordiness score!");
-    
+    session.results = results;
+    res.send(results);
+
+    /*let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97);
+    let testTrack2 = new wordinessItem("Dead Sea", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 70);
+    let testTrack3 = new wordinessItem( "Flapper Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 69);
+    let testTrack4 = new wordinessItem("Elouise", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65);
+    let testTrack5 = new wordinessItem("Classy Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65);
+    let testTracks = [testTrack1, testTrack2, testTrack3, testTrack4, testTrack5];
+
+    let testArtist1 = new wordinessItem("Hozier", "https://i.scdn.co/image/ab6761610000f178ad85a585103dfc2f3439119a", 71);
+    let testArtist2 = new wordinessItem("Johnny Cash", "https://i.scdn.co/image/ab6761610000f1785921cb8f2ec7bf6b5e725bcc", 66);
+    let testArtist3 = new wordinessItem("James Taylor", "https://i.scdn.co/image/ab6761610000f1785921cb8f2ec7bf6b5e725bcc", 66)
+    let testArtist4 = new wordinessItem("The Lumineers", "https://i.scdn.co/image/ab6761610000f178c79f78fd72a3e5faf699a8be", 64);
+    let testArtist5 = new wordinessItem( "The Avett Brothers", "https://i.scdn.co/image/ab6761610000f17890107bc970aad5a8b2a6dc40", 62);
+    let testArtists = [testArtist1, testArtist2, testArtist3, testArtist4, testArtist5];
+
+    let testWordiness = 475;
+
+    let test = {
+        tracks: testTracks,
+        artists: testArtists,
+        wordiness: testWordiness
+    };
+    res.send(test);*/
 });
 
-//process.on('unhandledRejection', (reason, promise) => {
- //   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
- // });  
-
-//starting the server
+//starting the express and socket server
 app.listen(port, () => {
     console.log("Hello I have started");
 });
