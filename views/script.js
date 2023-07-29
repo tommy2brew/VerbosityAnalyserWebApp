@@ -10,11 +10,20 @@ document.getElementById("burger").addEventListener("click", function () {
 });
 
 let loginButton = document.querySelector('#login');
-if (loginButton !== null) {
-    document.querySelector('#login').addEventListener("click", function () {
-    window.location.href = '/login';
+if(loginButton){
+    loginButton.addEventListener("click", function () {
+        window.location.href = '/login';
     });
-};
+}
+
+
+let logoutButton = document.querySelector('#logout');
+if(logoutButton){
+    logoutButton.addEventListener("click", function () {
+        window.location.href = '/logout';
+    });
+}
+
 
 //defining a function to get a random element from an array and remove it//
 Array.prototype.random = function () {
@@ -27,14 +36,12 @@ let words = ["Enigma", "Supine", "Sonder", "Effulgent", "Mellifluous", "Cacophon
     "Surreal", "Vellichor", "Nebulous", "Serenity", "Solitude", "Quintessence",
     "Aurora", "Whimsical", "Serenade", "Ephemeral", "Tranquil", "Vivacious", "Sempiternal", "Enchanting"];
 
-const pageWidth = window.innerWidth;
-
-
-const outerCircle = document.querySelector('#outer-circle').getBoundingClientRect();
-const outerCircleEdge = outerCircle.left + outerCircle.width - 100;
-const outerCircleBottom = outerCircle.top + outerCircle.height - 50;
-
 function spawnWord() {
+    const pageWidth = window.innerWidth;
+    const circle = document.querySelector('#outer-circle').getBoundingClientRect();
+    const circleEdge = circle.left + circle.width - 100;
+    const circleBottom = circle.top + circle.height - 50;
+
     let wordElement = document.createElement('span');
     wordElement.textContent = `"${words.random()}"`;
     wordElement.classList.add('falling-word');
@@ -46,8 +53,8 @@ function spawnWord() {
     wordElement.style.transform = `rotate(${degrees}deg)`;
     
     //randomly determining at what co-ordinates the word should fade out//
-    let animationEndX = Math.floor((Math.random() * (outerCircleEdge - outerCircle.left) + outerCircle.left));
-    let animationEndY = Math.floor((Math.random() * (outerCircleBottom - outerCircle.top) + outerCircle.top));
+    let animationEndX = Math.floor((Math.random() * (circleEdge - circle.left) + circle.left));
+    let animationEndY = Math.floor((Math.random() * (circleBottom - circle.top) + circle.top));
     
     setTimeout(() => {
         wordElement.style.transform = `translate(${animationEndX - xPosition}px, ${animationEndY}px)`;
@@ -85,7 +92,6 @@ async function fillCircle(score) {
     clearInterval(wordInterval);
 
     document.querySelector('#score').textContent = score;
-    document.querySelector('#percentile').textContent = "90%";
 };
 
 function setWordiest(wordinessItems) {
@@ -96,14 +102,10 @@ function setWordiest(wordinessItems) {
             let name = itemList[index].name;
             let wordiness = itemList[index].wordiness;
             
-            
-            let img = document.createElement("img");
+            let img = li.querySelector("img");
             img.src = picture;
-            li.appendChild(img);
-            let span = document.createElement("span");
-            span.textContent = `${index+1}. ${name}- ${wordiness} unique words per minute`;
-            li.appendChild(span)
-            
+            let span = li.querySelector("span");
+            span.textContent = `${index+1}. ${name}- ${wordiness} unique wpm`;
         })
     }
 
@@ -120,16 +122,25 @@ async function getWordinessItems() {
     try{
         const response = await fetch('/points');
         const data = await response.json();
-        return data;
+        if(data.status !== 401){
+            return data;
+            
+        }
+        document.querySelector('.notFound').classList.add('slide-in');
     }
     catch(error) {
         console.error("Error when fetching wordiness data: " + error);
+        document.querySelector('.notFound').classList.add('slide-in');
     }
 }
 
 async function personalisePage() {
     try {
         let wordinessItems = await getWordinessItems();
+
+        document.querySelector('#warning').style.display = "none";
+        document.querySelector('.calculating').style.display = "none";
+        
         setWordiest(wordinessItems);
         await fillCircle(wordinessItems.wordiness);
 
@@ -139,12 +150,12 @@ async function personalisePage() {
     }
     catch (error) {
         console.error("Error when getting wordiness items: " + error);
-        wordinessFailed();
+        document.querySelector('.notFound').classList.add('slide-in');
     }
 }
 
-function wordinessFailed() {
-
+window.onload = () => {
+    if(window.location.pathname === "/score"){
+        personalisePage();
+    }
 }
-
-personalisePage();
