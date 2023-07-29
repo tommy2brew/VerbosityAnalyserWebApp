@@ -5,7 +5,7 @@ const http = require('http');
 const https = require('https');
 require('dotenv').config();
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 app.use(express.static('views'));
 
@@ -50,8 +50,7 @@ app.get('/logout', function (req,res) {
 //constants used in multiple routes//
 const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
-const redirectURI = 'http://localhost:3001/callback';
-//const redirectURI = "http://192.168.3.175:3001/callback"
+const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
 
