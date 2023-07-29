@@ -3,7 +3,6 @@ const session = require('express-session');
 const querystring = require("querystring");
 const http = require('http');
 const https = require('https');
-const path = require('path');
 require('dotenv').config();
 const app = express();
 const port = 3001;
