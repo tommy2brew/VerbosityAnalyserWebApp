@@ -1,5 +1,5 @@
 const express = require("express");
-const session = require('express-session');
+const cookies = require('cookie-session');
 const querystring = require("querystring");
 const http = require('http');
 const https = require('https');
@@ -9,10 +9,12 @@ const port = process.env.PORT || 3001;
 
 app.use(express.static('views'));
 
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false
+app.use(cookies({
+    name: 'session',
+    keys: process.env.SESSION_SECRET,
+    maxAge: 24 * 60 * 80 *1000,
+    secure: true,
+    httpOnly: true
 }));
 
 
