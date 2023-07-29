@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Wordify</title>
+        <meta charset="UTF-8">
+        <meta name ="keywords" content ="Spotify, API, music">
+        <meta name = "description" content = "Test your musical wordiness">
+        <meta http-quiv="X-UA-Compatible" content="IE-edge">
+        <meta name ="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel ="stylesheet" href="style.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        
+    </head>
+
+    <body>
+        <header>
+            <a href ="#" id = "burger">
+                <i class ="fa fa-bars"></i>    
+            </a>
+
+            <div id = "links">
+                <a href = "wordify.html">Home</a>
+                <a href = "privacy.html">Privacy Policy</a>
+                <a href = "about.html">About</a>
+            </div>   
+        </header>
+        <div id="about">
+            <h1 class = "question">About Wordify</h1>
+            <p class = "answer">Wordify was inspired by <a href = "https://pudding.cool/projects/vocabulary/index.html">this graph</a> of rappers'
+                vocabularies, and uses MusixMatch's lyrical data to score you on the variedness of lyrical content in your top songs.
+            </p>
+            <h1 class = "question">How is my score calculated?</h1>
+            <p class = "answer">You're given a score of the average number unique words in the 15 wordiest songs in your top 30 Spotify songs of the last 6 months. So, the 15 songs
+                in the top 30 which have the most varied lyrical content. Scores go up to 1000.
+            </p>
+            <h1 class = "question">How did you make it?</h1>
+            <p class = "answer">The project is all open source; check out the github repo <a href = "https://github.com/tommy2brew/VerbosityAnalyserWebApp.git">here.</a> I used
+                Spotify's API and MusixMatch's API (they license lyrics to Spotify).
+            </p>
+            <h1 class = "question">Why does it only work for like 3 people a day?</h1>
+            <p class = "answer">The MusixMatch API's free tier is pretty limited for my needs; it offers 2000 API calls a day and each use makes arond 200 per scoring. That's still a decent
+                amount of people, but if any requests get fudged or you reload the page or whatever, the number per user goes up. So, the service will be pretty limited until
+                I feel like paying however much a month.
+            </p>
+        </div>
+        
+        <footer>
+            <p>Made By Tom P</p>
+        </footer>
+
+        <script src = "script.js"></script>
+    </body>
+</html>

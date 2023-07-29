@@ -69,6 +69,20 @@ header{
     border: 10px solid blue;
     border-radius: 25px;
     width: 150px;
+    position: relative;
+}
+
+.question{
+    color: #1DB954;
+    font-size: 2rem;
+    margin-top: 5rem;
+    border-top: thin solid grey;
+}
+
+.answer{
+    font-size: 1.5rem;
+    text-align: left;
+    margin-left: 10px;
 }
 
 #calculating-container{
@@ -258,5 +272,9 @@ footer>p{
     .top-5>ul{
         grid-gap: 50px;
         margin-right: auto;
+    }
+
+    .top-5>ul>li{
+        max-width: 300px;
     }
 }

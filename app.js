@@ -41,7 +41,7 @@ app.get('/score', function (req, res) {
 app.get('/logout', function (req,res) {
     req.session.accessToken = "";
     req.session.refreshToken = "";
-    res.session.results = "";
+    req.session.results = "";
     req.session.loggedOut = "true";
     res.redirect('/');
 });
@@ -51,8 +51,8 @@ app.get('/logout', function (req,res) {
 //constants used in multiple routes//
 const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
-//const redirectURI = 'http://localhost:3001/callback';
-const redirectURI = "http://192.168.3.175:3001/callback"
+const redirectURI = 'http://localhost:3001/callback';
+//const redirectURI = "http://192.168.3.175:3001/callback"
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
 
@@ -218,7 +218,7 @@ async function setTopTracks(accessToken){
 async function setTopArtists(accessToken){
     let endPointTopArtists = 'https://api.spotify.com/v1/me/top/artists';
     let queryParamsTopArtists = new URLSearchParams({
-        limit: 20,
+        limit: 15,
         offset: 0
     });
     try {
@@ -459,6 +459,7 @@ async function calculateUserWordiness() {
     return Math.round(score * 0.80);
 }
 
+///////////////////////////ROUTE FOR GIVING USER SCORE AND TOP ITEMS////////////////////////////// 
 app.get('/points', async function (req, res) {
     try{
         if(req.session.results){
@@ -516,11 +517,11 @@ app.get('/points', async function (req, res) {
     }
     catch (error){
         console.error("Couldnt calculate score: " + error);
-        res.send(401)
+        res.send({status: 401});
     }
 });
 
 //starting the express and socket server
-app.listen(port, "192.168.3.175"  || "localhost", () => {
+app.listen(port, () => {
     console.log("Hello I have started");
 });
