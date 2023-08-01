@@ -192,6 +192,7 @@ function getData(endPoint, queryParams, accessToken) {
                     resolve(data);
                 }
                 else{
+                    console.log(JSON.parse(data));
                     reject(console.log(outcome.statusCode + "in get spotify data"));
                 };
             });
