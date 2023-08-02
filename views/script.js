@@ -198,7 +198,7 @@ async function personalisePage() {
         setWordiest(wordinessItems);
         setCategory(wordinessItems.category);
         await fillCircle(wordinessItems.wordiness);
-        updateLeaderBoard(wordinessItems.leaderboardRow);
+        //updateLeaderBoard(wordinessItems.leaderboardRow);
 
         document.querySelector('.results-container').classList.add('slide-in');
         await delay(1500)
@@ -213,7 +213,7 @@ async function personalisePage() {
 
 window.onload = () => {
     if(window.location.pathname === "/score"){
-        setLeaderBoard();
+        //setLeaderBoard();
         personalisePage();
     }
 }

@@ -601,14 +601,14 @@ app.get('/points', async function (req, res) {
         console.log(userWordiness);
         console.log("------------------------wordiness---------------------------------");
 
-        let username = await getUsername(accessToken);
+        /*let username = await getUsername(accessToken);
         await insertScore(userWordiness, username);
         let leaderboardPosition = await getPosition(userWordiness);
         let leaderboardRow = {
             position: leaderboardPosition,
             name: username,
             score: userWordiness
-        };
+        };*/
 
         let userCategory = assignCategory(userWordiness);
         let results = {
@@ -616,8 +616,8 @@ app.get('/points', async function (req, res) {
             tracks: top5Tracks,
             artists: top5Artists,
             wordiness: userWordiness,
-            category: userCategory,
-            leaderboardRow: leaderboardRow
+            category: userCategory
+            //leaderboardRow: leaderboardRow
         };
 
         req.session.results = results;
