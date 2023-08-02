@@ -12,6 +12,19 @@
 </head>
 
 <body>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+    </table>
+
     <header>
         <a href="#" id="burger">
             <i class="fa fa-bars"></i>
@@ -28,47 +41,47 @@
         <h1 class="title">Wordify</h1>
     </div>
 
-    <div id="score-container">
-        <div id = "calculating-container">
-            <h1 class="calculating">Calculating Wordiness...</h1>
-        </div>
-        <p id = "warning">This might take up to 3 mins :/</p>
-        <div id="loading-container"></div>
-            <div id="outer-circle">
-                <div id="inner-circle">
-                    <p>0</p>
-                </div>
-            </div>
-            <div id = "scale">
-                
-            </div>
-        </div>
-        <div class="results-container">
-            <h1>Your score is <span id="score" class="result"></h1>
-            <div class= "personal-container">
-                <h2>Your wordiest songs are...</h2>
-                <div class="top-5">
-                    <ul id = "tracks">
-                        <li><img><span></span></li>
-                        <li><img><span></span></li>
-                        <li><img><span></span></li>
-                        <li><img><span></span></li>
-                        <li class="twocolumns"><img><span></span></li>
-                    </ul>
-                </div>
-                <h2>Your most verbose artists are...</h2>
-                <div class = "top-5">
-                    <ul id = "artists">
-                        <li><img><span></span></li>
-                        <li><img><span></span></li>
-                        <li><img><span></span></li>
-                        <li><img><span></span></li>
-                        <li class = "twocolumns"><img><span></span></li>
-                    </ul>
-                </div>
+    <div id = "calculating-container">
+        <h1 class="calculating">Calculating Wordiness...</h1>
+    </div>
+    <p id = "warning">This might take a couple mins</p>
+    <div id="loading-container">
+        <div id="outer-circle">
+            <div id="inner-circle">
+                <p>0</p>
             </div>
         </div>
     </div>
+    <div class="results-container">
+        <div id = "category">
+            <img>
+            <h1></h1>
+            <p></p>
+        </div>
+        <div class= "personal-container">
+            <h2>Your wordiest songs are...</h2>
+            <div class="top-5">
+                <ul id = "tracks">
+                    <li><img><span></span></li>
+                    <li><img><span></span></li>
+                    <li><img><span></span></li>
+                    <li><img><span></span></li>
+                    <li class="twocolumns"><img><span></span></li>
+                </ul>
+            </div>
+            <h2>Your most verbose artists are...</h2>
+            <div class = "top-5">
+                <ul id = "artists">
+                    <li><img><span></span></li>
+                    <li><img><span></span></li>
+                    <li><img><span></span></li>
+                    <li><img><span></span></li>
+                    <li class = "twocolumns"><img><span></span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+   
 
     <div class = "notFound">
         <h1>Sorry, we couldn't get your lyrical data. This is probably because of the low limits of the free tier

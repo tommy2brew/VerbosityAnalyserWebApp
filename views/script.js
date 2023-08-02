@@ -24,7 +24,6 @@ if(logoutButton){
     });
 }
 
-
 //defining a function to get a random element from an array and remove it//
 Array.prototype.random = function () {
     return this[Math.floor((Math.random() * this.length))];
@@ -78,7 +77,6 @@ async function fillCircle(score) {
     let fillScore = score/10;
     let filled = 0;
 
-    //delay effect by 2s to give illusion of falling words filling tank//
     await delay(2000);
     while(filled < fillScore){
         circle.style.background = `linear-gradient(to top, #1DB954 ${filled}%, white 0%)`;
@@ -90,8 +88,6 @@ async function fillCircle(score) {
     }
     text.textContent = score;
     clearInterval(wordInterval);
-
-    document.querySelector('#score').textContent = score;
 };
 
 function setWordiest(wordinessItems) {
@@ -118,13 +114,71 @@ function setWordiest(wordinessItems) {
     updateListElements(topArtistsElements, artists);
 }
 
+function setCategory(category){
+    let categoryContainer = document.querySelector('#category');
+    categoryContainer.querySelector('img').src = category.image;
+    categoryContainer.querySelector('h1').textContent = category.title;
+    categoryContainer.querySelector('p').textContent = category.description;
+}
+
+async function setLeaderBoard() {
+    let reponse = await fetch('/leaderboard');
+    let rows = await reponse.json();
+
+    let tableBody = document.querySelector('#leaderboard tbody');
+    tableBody.innerHTML = "";
+
+    let position = 1;
+    rows.forEach((row) => {
+        let newRow = document.createElement('tr');
+        let posCell = document.createElement('td');
+        posCell.textContent = position;
+        newRow.appendChild(posCell);
+        let nameCell = document.createElement('td');
+        nameCell.textContent = row.name;
+        newRow.appendChild(nameCell);
+        let scoreCell = document.createElement('td');
+        scoreCell.textContent = row.score;
+        newRow.appendChild(scoreCell);
+
+        tableBody.appendChild(newRow);
+        position++;
+    })
+}
+
+function updateLeaderBoard(row) {
+    let tableBody = document.querySelector('#leaderboard tbody');
+    let newRow = document.createElement('tr');
+    let posCell = document.createElement('td');
+    posCell.textContent = row.position;
+    newRow.appendChild(posCell);
+    let nameCell = document.createElement('td');
+    nameCell.textContent = row.name;
+    newRow.appendChild(nameCell);
+    let scoreCell = document.createElement('td');
+    scoreCell.textContent = row.score;
+    newRow.appendChild(scoreCell);
+
+    tableBody.appendChild(newRow);
+}
+
+function showWordiest() { 
+    const observer = new IntersectionObserver((entries) => {
+        if(entries[0].isIntersecting) {
+            entries[0].target.classList.add('scroll-in');
+        }
+    })
+
+    const wordiestContainer = document.querySelector('.personal-container');
+    observer.observe(wordiestContainer);
+}
+
 async function getWordinessItems() {
     try{
         const response = await fetch('/points');
         const data = await response.json();
         if(data.status !== 401){
             return data;
-            
         }
         document.querySelector('.notFound').classList.add('slide-in');
     }
@@ -142,11 +196,14 @@ async function personalisePage() {
         document.querySelector('.calculating').style.display = "none";
         
         setWordiest(wordinessItems);
+        setCategory(wordinessItems.category);
         await fillCircle(wordinessItems.wordiness);
+        updateLeaderBoard(wordinessItems.leaderboardRow);
 
         document.querySelector('.results-container').classList.add('slide-in');
         await delay(1500)
-        document.querySelector('.personal-container').classList.add('slide-in');
+        showWordiest();
+        //document.querySelector('.personal-container').classList.add('slide-in');
     }
     catch (error) {
         console.error("Error when getting wordiness items: " + error);
@@ -156,6 +213,7 @@ async function personalisePage() {
 
 window.onload = () => {
     if(window.location.pathname === "/score"){
+        setLeaderBoard();
         personalisePage();
     }
 }
