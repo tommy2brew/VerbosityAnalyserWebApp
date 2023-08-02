@@ -4,7 +4,6 @@ const querystring = require("querystring");
 const http = require('http');
 const https = require('https');
 const { error } = require("console");
-const { resolve } = require("path");
 const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
 const app = express();
@@ -53,9 +52,9 @@ app.get('/logout', function (req,res) {
 //constants used in multiple routes//
 const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
-const redirectURI = "http://localhost:3001/callback";
+//const redirectURI = "http://localhost:3001/callback";
 //const redirectURI = "http://192.168.43.117:3001/callback";
-//const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
+const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
 
