@@ -628,7 +628,7 @@ app.get('/points', async function (req, res) {
         let username = userDetails.username;
         let email = userDetails.email;
 
-        await insertScore(email, username, wordinessScore);
+        await insertScore(email, username, userWordiness);
         let leaderboardPosition = await getPosition(userWordiness);
         let leaderboardRow = {
             position: leaderboardPosition,
