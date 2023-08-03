@@ -3,6 +3,7 @@ const session = require('express-session');
 const querystring = require("querystring");
 const http = require('http');
 const https = require('https');
+const mongoose = require('mongoose');
 const { error } = require("console");
 const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
@@ -52,9 +53,9 @@ app.get('/logout', function (req,res) {
 //constants used in multiple routes//
 const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
-//const redirectURI = "http://localhost:3001/callback";
+const redirectURI = "http://localhost:3001/callback";
 //const redirectURI = "http://192.168.43.117:3001/callback";
-const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
+//const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
 
@@ -250,11 +251,14 @@ async function getArtistTopTracks(id, accessToken){
     }
 }
 
-async function getUsername(accessToken) {
+async function getUsernameAndEmail(accessToken) {
     let endPointUsername = 'https://api.spotify.com/v1/me';
     try {
         let userData = await getData(endPointUsername, "", accessToken);
-        return userData.display_name;
+        return {
+            username: userData.display_name,
+            email: userData.email
+        };
     }
     catch(error){
         console.error("Error when getting username. Error is: " + error);
@@ -474,41 +478,60 @@ async function calculateUserWordiness() {
     return Math.round(score);
 }
 
-const db = new sqlite3.Database('production.db')
-async function insertScore(score, name) {
-    db.run('INSERT INTO scores VALUES(?, ?, ?)', [null, name, score], (error) => {
-        if(error){
-            console.error("Problem inserting score. Error is: " + error);
+const mongoPassword = process.env.MONGO || "Oblivion";
+mongoose.connect(`mongodb+srv://tom:${mongoPassword}@wordify.lghqjg4.mongodb.net/?retryWrites=true&w=majority`, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+
+const scoresSchema = new mongoose.Schema({
+    email: String,
+    name: String,
+    score: Number
+});
+const Score = mongoose.model('scores', scoresSchema);
+
+async function insertScore(email, name, score) {
+    try{
+        let existingUser = await Score.findOne({email}).exec();
+        if(existingUser) {
+            existingUser.score = score;
+            await existingUser.save();
         }
-    });
-}
+        else {
+            let newScore = new Score({
+                email: email,
+                name: name,
+                score: score
+            });
+            newScore.save();
+        }
+    }
+    catch (error) {
+        console.error("Problem inserting score. Error is: " + error);
+    }   
+};
 
-function retrieveTopScores() {
-    return new Promise((resolve, reject) => {
-        db.all('SELECT name, score FROM scores ORDER BY score DESC LIMIT 5', (error, rows) => {
-            if(error){
-                reject(new Error("Problem getting top scores. Error is: " + error));
-            }
-            else{
-                resolve(rows);
-            }
-        });
-    });
-}
+async function retrieveTopScores() {
+    try{
+        const top5Scores = await Score.find().sort({score: -1}).limit(5).exec();
+        return top5Scores;
+    }
+    catch (error) {
+        console.errorr("Problem getting top scores. Error is: " + error);
+    }
+};
 
-function getPosition(score) {
-    return new Promise((resolve, reject) => {
-        db.all('SELECT name, score FROM scores ORDER BY score DESC', (error, rows) => {
-            if(error){
-                reject(new Error("Problem getting top scores. Error is: " + error));
-            }
-            else{
-                let index = rows.findIndex((row) => row.score <= score);
-                resolve(index + 1);
-            }
-        })
-    })
-}
+async function getPosition(score) {
+    try {
+        const sortedUsers = await Score.find().sort({ score: -1 }).exec();
+        let index = sortedUsers.findIndex((user) => user.score <= score);
+        return index+1;
+    }
+    catch (error) {
+        console.error("Problem getting leaderboard position. Error is: " + error);
+    }
+};
 
 function assignCategory(score) {
     let category = {
@@ -518,52 +541,52 @@ function assignCategory(score) {
     };
     if(score < 100){
         category.title = "Monk";
-        category.image = "/images/monk.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999188/monk_hkjird.jpg";
         category.description = "A score below 100 means you've got some monk-like listening habits. Your songs have almost no lyrics, you probably listen to classical music or nature sounds while in deep meditation for several hours a day. Or you're the complete opposite and are into EDM.";
     }
     else if(score < 200){
         category.title = "Dreamer";
-        category.image = "/images/dreamer.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999188/dreamer_wd29mm.jpg";
         category.description = "A score of 100-199 makes you a dreamer. You songs are probably very conceptual, with lyrics scattered infrequently through them. You might be really into prog rock or a similar genre.";
     }
     else if(score < 300){
         category.title = "Instrumentalist";
-        category.image = "/images/instrumentalist.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999187/instrumentalist_bgyjor.jpg";
         category.description = "Scoring between 200-299 means you really like your instruments. Your might be into pop or dance or rock and likely don't listen to music for the lyrics.";
     }
     else if(score < 400){
         category.title = "Music Listener";
-        category.image = "/images/average.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999192/average_fcawef.jpg";
         category.description = "You sure like music alright. A score in the 300s means you like music with lyrics, you like music with no lyrics, you like music. Pretty average.";
     }
     else if(score < 500){
         category.title = "Grounded";
-        category.image = "/images/grounded.jpeg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999187/grounded_kpv27q.jpg";
         category.description = "A score in the 400s makes you a pretty grounded listener who likes music with lyrical and intrumental components; lyrical complexity isn't something you seek out or avoid.";
     }
     else if(score < 600){
         category.title = "Witty";
-        category.image = "/images/witty.jpeg";
-        category.description = "Scoring in the 500s means your songs have some lyrical themes and contain a fair amount of unique lyrics. You might listen to a bit of rap or metal might be your thing.";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999188/witty_bxhrfy.jpg";
+        category.description = "Scoring in the 500s means your songs have alot of consistent lyrical themes, containing quite a few unique words. You might listen to a bit of rap, or folk or metal might be your thing.";
     }
     else if(score < 700){
         category.title = "Bookworm";
-        category.image = "/images/bookworm.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999187/bookworm_pldvlb.jpg";
         category.description = "Congrats, you've got some smart lyrics. Scoring in the 600s means your artists put some real thought into their lines. You've probably got a few rappers in your repertoire, but maybe aren't one for seeking out too many concious themes.";
     }
     else if(score < 800){
         category.title = "Wordsmith";
-        category.image = "/images/wordsmith.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999189/wordsmith_laocwo.jpg";
         category.description = "Wow look at you go. A 700s score means you listen to some verbose songs and like to be bombarded by lyrics ocassionally. Your artists know how to spit some fire when it's called for.";
     }
     else if(score < 900){
         category.title = "Scholar";
-        category.image = "/images/scholar.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999189/scholar_mank9v.jpg";
         category.description = "Dayom. You listen to some of the most loquacious artists in the game. A score in the 800s means you appreciate an artist ability to craft lyrics which haven't been thought up before. You likely enjoy exploring some complex themes in your music!";
     }
     else{
         category.title = "Supa Hot Fire!!!";
-        category.image = "images/supahot.jpg";
+        category.image = "https://res.cloudinary.com/dyzsjmqfx/image/upload/v1690999188/supahot_tudpbt.jpg";
         category.description = "Supa Hot Fireee!! You know all the words and seek out only artists who can dish out the toughest, most complex bars. Your artists have obviously all studied under the tutiledge of Sr. Supa Hot Fire.";
     }
     return category;
@@ -582,7 +605,7 @@ app.get('/leaderboard', async function(req, res) {
 
 app.get('/points', async function (req, res) {
     try{
-        if(req.session.results){
+        /*if(req.session.results){
             res.send(req.session.results);
             return;
         }
@@ -601,14 +624,16 @@ app.get('/points', async function (req, res) {
         console.log(userWordiness);
         console.log("------------------------wordiness---------------------------------");
 
-        /*let username = await getUsername(accessToken);
-        await insertScore(userWordiness, username);
+        let userDetails = await getUsernameAndEmail(accessToken);
+        let username = userDetails.username;
+        let email = userDetails.email;
+        await insertScore(email, username, wordinessScore);
         let leaderboardPosition = await getPosition(userWordiness);
         let leaderboardRow = {
             position: leaderboardPosition,
             name: username,
             score: userWordiness
-        };*/
+        };
 
         let userCategory = assignCategory(userWordiness);
         let results = {
@@ -616,14 +641,14 @@ app.get('/points', async function (req, res) {
             tracks: top5Tracks,
             artists: top5Artists,
             wordiness: userWordiness,
-            category: userCategory
-            //leaderboardRow: leaderboardRow
+            category: userCategory,
+            leaderboardRow: leaderboardRow
         };
 
         req.session.results = results;
-        res.send(results);
+        res.send(results);*/
         
-        /*let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97);
+        let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97);
         let testTrack2 = new wordinessItem("Dead Sea", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 70);
         let testTrack3 = new wordinessItem( "Flapper Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 69);
         let testTrack4 = new wordinessItem("Elouise", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65);
@@ -641,7 +666,9 @@ app.get('/points', async function (req, res) {
 
         let testCategory = assignCategory(testWordiness);
         let testUsername = "Joe";
-        await insertScore(testWordiness, testUsername);
+        let testEmail = "joe@gwho.com";
+        
+        await insertScore(testEmail, testUsername, testWordiness);
         let testLeaderboardPosition = await getPosition(testWordiness);
         let testLeaderboardRow = {
             position: testLeaderboardPosition,
@@ -657,7 +684,7 @@ app.get('/points', async function (req, res) {
             category: testCategory,
             leaderboardRow: testLeaderboardRow
         };
-        res.send(test);*/
+        res.send(test);
     }
     catch (error){
         console.error("Couldnt calculate score: " + error);

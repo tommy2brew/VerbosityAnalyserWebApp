@@ -159,6 +159,7 @@ function updateLeaderBoard(row) {
     scoreCell.textContent = row.score;
     newRow.appendChild(scoreCell);
 
+    newRow.style.backgroundColor = "#72e99b";
     tableBody.appendChild(newRow);
 }
 
@@ -191,19 +192,19 @@ async function getWordinessItems() {
 async function personalisePage() {
     try {
         let wordinessItems = await getWordinessItems();
-
+        console.log(wordinessItems);
         document.querySelector('#warning').style.display = "none";
         document.querySelector('.calculating').style.display = "none";
         
         setWordiest(wordinessItems);
         setCategory(wordinessItems.category);
         await fillCircle(wordinessItems.wordiness);
-        //updateLeaderBoard(wordinessItems.leaderboardRow);
+        updateLeaderBoard(wordinessItems.leaderboardRow);
 
         document.querySelector('.results-container').classList.add('slide-in');
         await delay(1500)
         showWordiest();
-        //document.querySelector('.personal-container').classList.add('slide-in');
+        document.querySelector('.personal-container').classList.add('slide-in');
     }
     catch (error) {
         console.error("Error when getting wordiness items: " + error);
@@ -213,7 +214,7 @@ async function personalisePage() {
 
 window.onload = () => {
     if(window.location.pathname === "/score"){
-        //setLeaderBoard();
+        setLeaderBoard();
         personalisePage();
     }
 }
