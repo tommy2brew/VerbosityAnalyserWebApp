@@ -53,9 +53,9 @@ app.get('/logout', function (req,res) {
 //constants used in multiple routes//
 const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
-const redirectURI = "http://localhost:3001/callback";
+//const redirectURI = "http://localhost:3001/callback";
 //const redirectURI = "http://192.168.43.117:3001/callback";
-//const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
+const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
 
@@ -605,7 +605,7 @@ app.get('/leaderboard', async function(req, res) {
 
 app.get('/points', async function (req, res) {
     try{
-        /*if(req.session.results){
+        if(req.session.results){
             res.send(req.session.results);
             return;
         }
@@ -627,6 +627,7 @@ app.get('/points', async function (req, res) {
         let userDetails = await getUsernameAndEmail(accessToken);
         let username = userDetails.username;
         let email = userDetails.email;
+
         await insertScore(email, username, wordinessScore);
         let leaderboardPosition = await getPosition(userWordiness);
         let leaderboardRow = {
@@ -646,9 +647,9 @@ app.get('/points', async function (req, res) {
         };
 
         req.session.results = results;
-        res.send(results);*/
+        res.send(results);
         
-        let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97);
+        /*let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97);
         let testTrack2 = new wordinessItem("Dead Sea", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 70);
         let testTrack3 = new wordinessItem( "Flapper Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 69);
         let testTrack4 = new wordinessItem("Elouise", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65);
@@ -684,7 +685,7 @@ app.get('/points', async function (req, res) {
             category: testCategory,
             leaderboardRow: testLeaderboardRow
         };
-        res.send(test);
+        res.send(test);*/
     }
     catch (error){
         console.error("Couldnt calculate score: " + error);
