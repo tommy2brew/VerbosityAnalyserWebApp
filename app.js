@@ -493,7 +493,7 @@ const Score = mongoose.model('scores', scoresSchema);
 
 async function insertScore(email, name, score) {
     try{
-        let existingUser = await Score.findOne({email}).exec();
+        let existingUser = await Score.findOne({email: email}).exec();
         if(existingUser) {
             existingUser.score = score;
             await existingUser.save();
