@@ -11,7 +11,6 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(express.static('views'));
-app.use(express.static('images'));
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -19,7 +18,6 @@ app.use(session({
     saveUninitialized: true
 }));
 
-//handling routes//
 app.get('/', (req, res) => {
     res.sendFile('wordify.html', { root: './views' });
 });
@@ -48,7 +46,7 @@ app.get('/logout', function (req,res) {
     res.redirect('/');
 });
 
-///////////////////////API AUTHENTICATION////////////////////////////
+////////////////////////////SPOTIFY API AUTHENTICATION/////////////////////////////////
 
 //constants used in multiple routes//
 const secret = process.env.SECRET;
@@ -169,7 +167,7 @@ app.get('/refresh_token', function(req, res){
 });
 
 
-/////////////////////API CALLS USING ACCESS TOKEN/////////////////////////////
+////////////////////////////API CALLS USING ACCESS TOKEN/////////////////////////////////////
 function getData(endPoint, queryParams, accessToken) {
     return new Promise((resolve, reject) => {
         let options = {
@@ -204,6 +202,7 @@ function getData(endPoint, queryParams, accessToken) {
     });
 };
 
+//these vars will be populated with api data from some of the following functions//
 let userTracks;
 let userArtists;
 
@@ -261,10 +260,12 @@ async function getUsernameAndEmail(accessToken) {
         };
     }
     catch(error){
-        console.error("Error when getting username. Error is: " + error);
+        console.error("Error when getting username and email. Error is: " + error);
     }
 }
-////////////////////////SONG LYRIC API CALL///////////////////////////////
+
+/////////////////////////////SONG LYRIC API CALL//////////////////////////////////
+
 const musixmatchKey = process.env.LYRICS_KEY;
 function getLyricsData(endpoint, queryParams) {
     return new Promise((resolve, reject) => {
@@ -325,17 +326,18 @@ async function getLyrics(id) {
         if(error.toString().includes('401')) {throw ("401");}
     }
 }
-//////////////////////WORDINESS SCORE LOGIC////////////////////////////
+////////////////////////////////WORDINESS SCORE LOGIC///////////////////////////////////////
 
 let top5Tracks = [];
 let top5Artists = [];
 
 //blueprint for both top songs and artists, to be used in client-side script//
 class wordinessItem {
-    constructor(name, picture, wordiness) {
+    constructor(name, picture, wordiness, link) {
         this.name = name;
         this.picture = picture;
         this.wordiness = wordiness;
+        this.link = link;
     }
 }
 
@@ -377,7 +379,7 @@ async function getTrackWordiness(urlSearch, duration) {
     return Math.round(wordiness);
 }
 
-async function getArtistTopTrackNamesAndID(id, accessToken) {
+async function getArtistTopTrackNamesAndDuration(id, accessToken) {
     let topTrackNamesAndDuration = [];
 
     let topTracksArray = await getArtistTopTracks(id, accessToken);
@@ -391,7 +393,7 @@ async function calculateArtistWordiness(id, name, accessToken) {
     let totalTracksWordiness = 0;
     let trackOmissions = 0;
 
-    let allArtistTracks = await getArtistTopTrackNamesAndID(id, accessToken);
+    let allArtistTracks = await getArtistTopTrackNamesAndDuration(id, accessToken);
     for(const track of allArtistTracks){
         trackWordiness = await getTrackWordiness(musixmatchURLify(track.name, name),
             track.duration);
@@ -402,16 +404,11 @@ async function calculateArtistWordiness(id, name, accessToken) {
             totalTracksWordiness += trackWordiness;
         }
     }
+    //if more than 30% of the songs have been omitted, skip the artist
     if(trackOmissions > allArtistTracks.length*0.3){return 0};
 
     let usableTracks = allArtistTracks.length-trackOmissions;
-    try{
-        return Math.round(totalTracksWordiness/usableTracks);
-    }
-    catch (error){
-        console.log(`Couldn't get wordiness for ${name}. They might have no lyrics on file`);
-    }
-    
+    return Math.round(totalTracksWordiness/usableTracks);
 }
 
 async function setWordiestTracks() {
@@ -421,9 +418,10 @@ async function setWordiestTracks() {
         let name = track.name;
         let artist = track.artists[0].name;
         let albumCover = track.album.images[1].url;
+        let link = track.external_urls.spotify;
         let duration = track.duration_ms;
         let wordiness = await getTrackWordiness(musixmatchURLify(name, artist), duration);
-        trimmedTrack = new wordinessItem(name, albumCover, wordiness);
+        trimmedTrack = new wordinessItem(name, albumCover, wordiness, link);
         allTracks.push(trimmedTrack);
     }
 
@@ -438,8 +436,9 @@ async function setWordiestArtists(accessToken) {
         for (const artist of userArtists) {
             let name = artist.name;
             let picture = artist.images[1].url;
+            let link = artist.external_urls.spotify;
             let wordiness = await calculateArtistWordiness(artist.id, name, accessToken)
-            trimmedArtist = new wordinessItem(name, picture, wordiness);
+            trimmedArtist = new wordinessItem(name, picture, wordiness, link);
             allArtists.push(trimmedArtist);
         }
 
@@ -452,6 +451,7 @@ async function calculateUserWordiness() {
     let allWordinesses = [];
     let trackOmissions = 0;
 
+    //variable which gives a multiplier to the score based on the songs position in the user's top tracks
     let scoreOffset = 1.25;
     for (const track of userTracks) {
         let artist = track.album.artists[0].name;
@@ -469,6 +469,7 @@ async function calculateUserWordiness() {
         scoreOffset -= 0.025;
     }
     
+    //sort by decreasing wordiness and return the average of the top 15 highest scoring songs
     allWordinesses.sort((a,b) => b - a);
     sliceRange = trackOmissions < 15 ? 15 : trackOmissions;
     let top15wordiest = allWordinesses.slice(0, sliceRange);
@@ -478,61 +479,7 @@ async function calculateUserWordiness() {
     return Math.round(score);
 }
 
-const mongoPassword = process.env.MONGO || "Oblivion";
-mongoose.connect(`mongodb+srv://tom:${mongoPassword}@wordify.lghqjg4.mongodb.net/?retryWrites=true&w=majority`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
-
-const scoresSchema = new mongoose.Schema({
-    email: String,
-    name: String,
-    score: Number
-});
-const Score = mongoose.model('scores', scoresSchema);
-
-async function insertScore(email, name, score) {
-    try{
-        let existingUser = await Score.findOne({email: email}).exec();
-        if(existingUser) {
-            existingUser.score = score;
-            await existingUser.save();
-        }
-        else {
-            let newScore = new Score({
-                email: email,
-                name: name,
-                score: score
-            });
-            newScore.save();
-        }
-    }
-    catch (error) {
-        console.error("Problem inserting score. Error is: " + error);
-    }   
-};
-
-async function retrieveTopScores() {
-    try{
-        const top5Scores = await Score.find().sort({score: -1}).limit(5).exec();
-        return top5Scores;
-    }
-    catch (error) {
-        console.errorr("Problem getting top scores. Error is: " + error);
-    }
-};
-
-async function getPosition(score) {
-    try {
-        const sortedUsers = await Score.find().sort({ score: -1 }).exec();
-        let index = sortedUsers.findIndex((user) => user.score <= score);
-        return index+1;
-    }
-    catch (error) {
-        console.error("Problem getting leaderboard position. Error is: " + error);
-    }
-};
-
+//sorts user into a category based on their wordiness score//
 function assignCategory(score) {
     let category = {
         title: "",
@@ -592,7 +539,66 @@ function assignCategory(score) {
     return category;
 }
 
-//////////////////////ROUTE USED IN CLIENT-SIDE TO SCORE USER/////////////////////////// 
+/////////////////////////////DATABASE FUNCTIONALITY///////////////////////////////////////////////
+
+const mongoPassword = process.env.MONGO;
+mongoose.connect(`mongodb+srv://tom:${mongoPassword}@wordify.lghqjg4.mongodb.net/?retryWrites=true&w=majority`, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+
+const scoresSchema = new mongoose.Schema({
+    email: String,
+    name: String,
+    score: Number
+});
+const Score = mongoose.model('scores', scoresSchema);
+
+async function insertScore(email, name, score) {
+    try{
+        let existingUser = await Score.findOne({email: email}).exec();
+        //to avoid leaderboard filling with duplicates
+        if(existingUser) {
+            existingUser.score = score;
+            await existingUser.save();
+        }
+        else {
+            let newScore = new Score({
+                email: email,
+                name: name,
+                score: score
+            });
+            newScore.save();
+        }
+    }
+    catch (error) {
+        console.error("Problem inserting score. Error is: " + error);
+    }   
+};
+
+async function retrieveTopScores() {
+    try{
+        const top5Scores = await Score.find().sort({score: -1}).limit(5).exec();
+        return top5Scores;
+    }
+    catch (error) {
+        console.errorr("Problem getting top scores. Error is: " + error);
+    }
+};
+
+async function getPosition(score) {
+    try {
+        const sortedUsers = await Score.find().sort({ score: -1 }).exec();
+        let index = sortedUsers.findIndex((user) => user.score <= score);
+        return index+1;
+    }
+    catch (error) {
+        console.error("Problem getting leaderboard position. Error is: " + error);
+    }
+};
+
+//////////////////////ROUTES USED IN CLIENT-SIDE SCORING PAGE/////////////////////////// 
+
 app.get('/leaderboard', async function(req, res) {
     try{
         let leaderboard = await retrieveTopScores();
@@ -603,6 +609,8 @@ app.get('/leaderboard', async function(req, res) {
     }
 })
 
+
+//main route used to give users their score
 app.get('/points', async function (req, res) {
     try{
         if(req.session.results){
@@ -635,8 +643,8 @@ app.get('/points', async function (req, res) {
             name: username,
             score: userWordiness
         };
-
         let userCategory = assignCategory(userWordiness);
+
         let results = {
             status: 200,
             tracks: top5Tracks,
@@ -649,18 +657,19 @@ app.get('/points', async function (req, res) {
         req.session.results = results;
         res.send(results);
         
-        /*let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97);
-        let testTrack2 = new wordinessItem("Dead Sea", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 70);
-        let testTrack3 = new wordinessItem( "Flapper Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 69);
-        let testTrack4 = new wordinessItem("Elouise", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65);
-        let testTrack5 = new wordinessItem("Classy Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65);
+        //this some test data so that you don't have to rely on the low limits of the musixmatch api to test//
+        /*let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97, "https://open.spotify.com/track/3Hvg5tRKsQlX25wYwgMF9p");
+        let testTrack2 = new wordinessItem("Dead Sea", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 70, "https://open.spotify.com/track/1DDNfRbtLn2dxm4onBxhOV");
+        let testTrack3 = new wordinessItem( "Flapper Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 69, "https://open.spotify.com/track/5WVtCTzyAkQ6vmgbkPPF2D");
+        let testTrack4 = new wordinessItem("Elouise", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65, "https://open.spotify.com/track/5LLMYWdANGwQTfGtTi30Bp");
+        let testTrack5 = new wordinessItem("Classy Girls", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65, "https://open.spotify.com/track/0zRfhiZqKj9emeUabPLxYE");
         let testTracks = [testTrack1, testTrack2, testTrack3, testTrack4, testTrack5];
 
-        let testArtist1 = new wordinessItem("Hozier", "https://i.scdn.co/image/ab6761610000f178ad85a585103dfc2f3439119a", 71);
-        let testArtist2 = new wordinessItem("Johnny Cash", "https://i.scdn.co/image/ab6761610000f1785921cb8f2ec7bf6b5e725bcc", 66);
-        let testArtist3 = new wordinessItem("James Taylor", "https://i.scdn.co/image/ab6761610000f1785921cb8f2ec7bf6b5e725bcc", 66)
-        let testArtist4 = new wordinessItem("The Lumineers", "https://i.scdn.co/image/ab6761610000f178c79f78fd72a3e5faf699a8be", 64);
-        let testArtist5 = new wordinessItem( "The Avett Brothers", "https://i.scdn.co/image/ab6761610000f17890107bc970aad5a8b2a6dc40", 62);
+        let testArtist1 = new wordinessItem("Hozier", "https://i.scdn.co/image/ab6761610000f178ad85a585103dfc2f3439119a", 71, "https://open.spotify.com/artist/2FXC3k01G6Gw61bmprjgqS");
+        let testArtist2 = new wordinessItem("Johnny Cash", "https://i.scdn.co/image/ab6761610000f1785921cb8f2ec7bf6b5e725bcc", 66, "https://open.spotify.com/artist/6kACVPfCOnqzgfEF5ryl0x");
+        let testArtist3 = new wordinessItem("James Taylor", "https://i.scdn.co/image/ab6761610000f1785921cb8f2ec7bf6b5e725bcc", 66, "https://open.spotify.com/artist/0vn7UBvSQECKJm2817Yf1P")
+        let testArtist4 = new wordinessItem("The Lumineers", "https://i.scdn.co/image/ab6761610000f178c79f78fd72a3e5faf699a8be", 64, "https://open.spotify.com/artist/16oZKvXb6WkQlVAjwo2Wbg");
+        let testArtist5 = new wordinessItem( "The Avett Brothers", "https://i.scdn.co/image/ab6761610000f17890107bc970aad5a8b2a6dc40", 62, "https://open.spotify.com/artist/196lKsA13K3keVXMDFK66q");
         let testArtists = [testArtist1, testArtist2, testArtist3, testArtist4, testArtist5];
 
         let testWordiness = 475;
@@ -693,7 +702,6 @@ app.get('/points', async function (req, res) {
     }
 });
 
-//starting the express
 app.listen(port, () => {
     console.log("Hello I have started");
 });

@@ -97,11 +97,15 @@ function setWordiest(wordinessItems) {
             let picture = itemList[index].picture;
             let name = itemList[index].name;
             let wordiness = itemList[index].wordiness;
-            
+            let link = itemList[index].link;
+
             let img = li.querySelector("img");
             img.src = picture;
             let span = li.querySelector("span");
             span.textContent = `${index+1}. ${name}- ${wordiness} unique wpm`;
+            console.log(link)
+            let a = li.querySelector("a");
+            a.href = link;
         })
     }
 
@@ -132,7 +136,7 @@ async function setLeaderBoard() {
     rows.forEach((row) => {
         let newRow = document.createElement('tr');
         let posCell = document.createElement('td');
-        posCell.textContent = position;
+        posCell.textContent = `#${position}`;
         newRow.appendChild(posCell);
         let nameCell = document.createElement('td');
         nameCell.textContent = row.name;
@@ -150,7 +154,7 @@ function updateLeaderBoard(row) {
     let tableBody = document.querySelector('#leaderboard tbody');
     let newRow = document.createElement('tr');
     let posCell = document.createElement('td');
-    posCell.textContent = row.position;
+    posCell.textContent = `#${row.position}`;
     newRow.appendChild(posCell);
     let nameCell = document.createElement('td');
     nameCell.textContent = row.name;
@@ -169,7 +173,6 @@ function showWordiest() {
             entries[0].target.classList.add('scroll-in');
         }
     })
-
     const wordiestContainer = document.querySelector('.personal-container');
     observer.observe(wordiestContainer);
 }
