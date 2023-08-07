@@ -51,9 +51,9 @@ app.get('/logout', function (req,res) {
 //constants used in multiple routes//
 const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
-const redirectURI = "http://localhost:3001/callback";
+//const redirectURI = "http://localhost:3001/callback";
 //const redirectURI = "http://192.168.43.117:3001/callback";
-//const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
+const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
 
@@ -613,7 +613,7 @@ app.get('/leaderboard', async function(req, res) {
 //main route used to give users their score
 app.get('/points', async function (req, res) {
     try{
-        /*if(req.session.results){
+        if(req.session.results){
             res.send(req.session.results);
             return;
         }
@@ -655,10 +655,10 @@ app.get('/points', async function (req, res) {
         };
 
         req.session.results = results;
-        res.send(results);*/
+        res.send(results);
         
         //this some test data so that you don't have to rely on the low limits of the musixmatch api to test//
-        let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97, "https://open.spotify.com/track/3Hvg5tRKsQlX25wYwgMF9p");
+        /*let testTrack1 = new wordinessItem("Flowers In Your Hair", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 97, "https://open.spotify.com/track/3Hvg5tRKsQlX25wYwgMF9p");
         let testTrack2 = new wordinessItem("Dead Sea", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 70, "https://open.spotify.com/track/1DDNfRbtLn2dxm4onBxhOV");
         let testTrack3 = new wordinessItem( "Flapper Girl", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 69, "https://open.spotify.com/track/5WVtCTzyAkQ6vmgbkPPF2D");
         let testTrack4 = new wordinessItem("Elouise", "https://i.scdn.co/image/ab67616d0000485115784f5212050cf2e67f1935", 65, "https://open.spotify.com/track/5LLMYWdANGwQTfGtTi30Bp");
@@ -694,7 +694,7 @@ app.get('/points', async function (req, res) {
             category: testCategory,
             leaderboardRow: testLeaderboardRow
         };
-        res.send(test);
+        res.send(test);*/
     }
     catch (error){
         console.error("Couldnt calculate score: " + error);
