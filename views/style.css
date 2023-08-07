@@ -391,7 +391,7 @@ footer>p{
     }
 
     .top-5{
-        margin-right: auto;
+        margin-right: 0;
     }
     .top-5>ul{
         grid-gap: 50px;
