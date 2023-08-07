@@ -196,8 +196,8 @@ async function personalisePage() {
     try {
         let wordinessItems = await getWordinessItems();
         console.log(wordinessItems);
-        //document.querySelector('#warning').style.display = "none";
-        // /document.querySelector('.calculating').style.display = "none";
+        document.querySelector('#warning').style.display = "none";
+        document.querySelector('.calculating').style.display = "none";
         
         setWordiest(wordinessItems);
         setCategory(wordinessItems.category);

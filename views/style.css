@@ -97,6 +97,7 @@ header{
 
 #leaderboard{
     margin-left: 5px;
+    margin-bottom: 20px;
     width: 30%;
     font-size: 1.25rem;
     border-spacing: 0;
@@ -209,7 +210,7 @@ tr:nth-child(even) {
 }
 
 .results-container{
-    width: 100%;
+    width: 100vw;
     display: grid;
     place-items: center;
     opacity: 0;
@@ -226,9 +227,7 @@ tr:nth-child(even) {
     transition: all 2s ease 2s;
     display: grid;
     place-items: center;
-    max-width: 100vw;
-    width: 100%;
-    margin-top: 2rem;
+    width: 100vw;
     filter: blur(5px);
     transform: translateX(-100%);
     transition: all 1s;
@@ -269,18 +268,18 @@ tr:nth-child(even) {
 }
 
 .top-5{
+    overflow: hidden;
     font-size: 1.75rem;
     padding-bottom: 1.5rem;
+    margin-right: 30px;
 }
 
 .top-5>ul{
     display: grid;
-    justify-items: center;
     place-items: center;
     grid-template-columns: 2;
     grid-template-rows: 3;
-    grid-gap: 50px;
-    margin-right: 25px;
+    grid-gap: 20px;
 }
 
 .top-5>ul>li{
@@ -296,7 +295,6 @@ tr:nth-child(even) {
 .level>img{
     width: 110px;
     height: 110px;
-    margin-left: 15%;
 }
 
 .level>a{
@@ -392,6 +390,9 @@ footer>p{
         border: none;
     }
 
+    .top-5{
+        margin-right: auto;
+    }
     .top-5>ul{
         grid-gap: 50px;
         margin-right: auto;

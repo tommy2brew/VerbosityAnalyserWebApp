@@ -5,7 +5,6 @@ const http = require('http');
 const https = require('https');
 const mongoose = require('mongoose');
 const { error } = require("console");
-const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3001;
@@ -53,6 +52,7 @@ const secret = process.env.SECRET;
 const clientID = "8a80fb4569e4406da3ad13870a043324";
 //const redirectURI = "http://localhost:3001/callback";
 //const redirectURI = "http://192.168.43.117:3001/callback";
+//const redirectURI = "http://192.168.97.175:3001/callback";
 const redirectURI = 'https://wordify-c0z5.onrender.com/callback';
 const authorisation = 'Basic ' + Buffer.from(clientID + ':' + secret).toString('base64');
 const contentType = 'application/x-www-form-urlencoded';
@@ -702,6 +702,6 @@ app.get('/points', async function (req, res) {
     }
 });
 
-app.listen(port, () => {
+app.listen(port,  () => {
     console.log("Hello I have started");
 });
