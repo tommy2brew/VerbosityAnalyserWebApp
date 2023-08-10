@@ -82,6 +82,14 @@ header{
     position: relative;
 }
 
+#login:hover{
+    color: #f33e06
+}
+
+#logout:hover{
+    color: #0ba03c;
+}
+
 .question{
     color: #1DB954;
     font-size: 2rem;
@@ -96,8 +104,7 @@ header{
 }
 
 #leaderboard{
-    margin-left: 5px;
-    margin-bottom: 20px;
+    margin: 10px 15px 20px auto;
     width: 30%;
     font-size: 1.25rem;
     border-spacing: 0;
@@ -339,6 +346,7 @@ footer>p{
     }
 
     #leaderboard{
+        margin: 0px 30px 10px auto;
         width: 15%;
         font-size: 1.75rem;
     }

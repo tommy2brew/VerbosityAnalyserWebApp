@@ -672,11 +672,11 @@ app.get('/points', async function (req, res) {
         let testArtist5 = new wordinessItem( "The Avett Brothers", "https://i.scdn.co/image/ab6761610000f17890107bc970aad5a8b2a6dc40", 62, "https://open.spotify.com/artist/196lKsA13K3keVXMDFK66q");
         let testArtists = [testArtist1, testArtist2, testArtist3, testArtist4, testArtist5];
 
-        let testWordiness = 475;
+        let testWordiness = 850;
 
         let testCategory = assignCategory(testWordiness);
-        let testUsername = "Joe";
-        let testEmail = "joe@gwho.com";
+        let testUsername = "DictionaryDave";
+        let testEmail = "dave@gwho.com";
         
         await insertScore(testEmail, testUsername, testWordiness);
         let testLeaderboardPosition = await getPosition(testWordiness);
