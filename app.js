@@ -29,7 +29,7 @@ app.get('/privacy', (req, res) => {
     res.sendFile('privacy.html', { root: './views' })
 });
 
-app.get('/score', function (req, res) {
+app.get('/score', (req, res) => {
     if (!req.session.accessToken) {
       res.redirect('/login');
       return;
@@ -37,7 +37,7 @@ app.get('/score', function (req, res) {
     res.sendFile('score.html', { root: './views' });
 });
 
-app.get('/logout', function (req,res) {
+app.get('/logout', (req,res) => {
     req.session.accessToken = "";
     req.session.refreshToken = "";
     req.session.results = "";
