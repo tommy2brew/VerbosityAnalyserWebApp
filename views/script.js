@@ -29,11 +29,16 @@ Array.prototype.random = function () {
     return this[Math.floor((Math.random() * this.length))];
 }
 
-let words = ["Enigma", "Supine", "Sonder", "Effulgent", "Mellifluous", "Cacophony", "Bucolic",
-    "Ethereal", "Incandescent", "Labyrinthine", "Ineffable",
-    "Resilience", "Mellifluous", "Serendipity", "Halcyon", "Euphoria",
-    "Surreal", "Vellichor", "Nebulous", "Serenity", "Solitude", "Quintessence",
-    "Aurora", "Whimsical", "Serenade", "Ephemeral", "Tranquil", "Vivacious", "Sempiternal", "Enchanting"];
+let words = ["Ephemeral", "Serendipity", "Mellifluous", "Eloquent", "Resplendent", "Nebulous", "Luminous", "Epiphany", "Opulent", "Ethereal", "Effervescent", 
+    "Quixotic", "Serene", "Bucolic", "Mellifluent", "Grandiose", "Ineffable", "Pernicious", "Aplomb", "Euphoria", "Panacea", "Cacophony", "Labyrinthine", "Perspicacious", 
+    "Vivacious", "Enigmatic", "Evanescent", "Ambrosial", "Sycophant", "Mellow", "Dulcet", "Incandescent", "Rhapsody", "Opalescent", "Persnickety", "Sesquipedalian", "Echelon", 
+    "Capricious", "Petrichor", "Languid", "Palimpsest", "Susurrus", "Ephemeral", "Quotidian", "Luminous", "Iridescent", "Dulcimer", "Resonance", "Paragon", "Ostentatious", 
+    "Mellifluous", "Zephyr", "Sibilant", "Pulchritude", "Ephemeral", "Ennui", "Ethereal", "Breathtaking", "Halcyon", "Incantation", "Effulgent", "Ineffable", "Inscrutable", 
+    "Nebulous", "Enigmatic", "Mellifluous", "Euphoria", "Labyrinthine", "Opulent", "Quixotic", "Resplendent", "Serendipity", "Vestige", "Luminous", "Serene", "Cacophony", 
+    "Eloquent", "Grandiose", "Panacea", "Perfidious", "Querulous", "Vicarious", "Vivacious", "Aplomb", "Bucolic", "Capricious", "Cynosure", "Denouement", "Elision", "Epiphany", 
+    "Facetious", "Garrulous", "Halcyon", "Iridescent", "Juxtaposition", "Kaleidoscope", "Lethargic", "Mellifluous", "Nefarious", "Opaque", "Palladium", "Quixotic", "Recalcitrant",
+    "Surreptitious", "Transient", "Ubiquitous", "Visceral", "Whimsical", "Xenophile", "Yesteryear", "Zephyr"
+];
 
 function spawnWord() {
     const pageWidth = window.innerWidth;
